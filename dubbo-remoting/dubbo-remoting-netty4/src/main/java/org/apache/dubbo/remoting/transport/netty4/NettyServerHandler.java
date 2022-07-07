@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * NettyServerHandler.
  */
+// 此handler可以共享
 @io.netty.channel.ChannelHandler.Sharable
 public class NettyServerHandler extends ChannelDuplexHandler {
     private static final Logger logger = LoggerFactory.getLogger(NettyServerHandler.class);
@@ -69,6 +70,7 @@ public class NettyServerHandler extends ChannelDuplexHandler {
         if (channel != null) {
             channels.put(NetUtils.toAddressString((InetSocketAddress) ctx.channel().remoteAddress()), channel);
         }
+        // 这里调用的是被包装的server
         handler.connected(channel);
 
         if (logger.isInfoEnabled()) {
