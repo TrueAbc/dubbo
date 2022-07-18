@@ -21,6 +21,7 @@ import org.apache.dubbo.common.logger.Logger;
 import org.apache.dubbo.common.logger.LoggerFactory;
 import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.RemotingException;
+import org.apache.dubbo.remoting.api.pu.NioChannel;
 import org.apache.dubbo.remoting.transport.AbstractChannel;
 import org.apache.dubbo.remoting.utils.PayloadDropper;
 
@@ -39,7 +40,7 @@ import static org.apache.dubbo.common.constants.CommonConstants.TIMEOUT_KEY;
 /**
  * NettyChannel maintains the cache of channel.
  */
-final class NettyChannel extends AbstractChannel {
+final class NettyChannel extends AbstractChannel implements NioChannel<io.netty.channel.Channel> {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyChannel.class);
     /**
@@ -273,4 +274,8 @@ final class NettyChannel extends AbstractChannel {
         return "NettyChannel [channel=" + channel + "]";
     }
 
+    @Override
+    public Channel getNioChannel() {
+        return this.channel;
+    }
 }

@@ -19,6 +19,8 @@ package org.apache.dubbo.remoting.api;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.extension.ExtensionScope;
 import org.apache.dubbo.common.extension.SPI;
+import org.apache.dubbo.remoting.Channel;
+import org.apache.dubbo.remoting.ChannelHandler;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.ssl.SslContext;
@@ -28,7 +30,7 @@ public interface WireProtocol {
 
     ProtocolDetector detector();
 
-    void configServerPipeline(URL url, ChannelPipeline pipeline, SslContext sslContext);
+    void configServerPipeline(URL url, Channel channel, ChannelHandler channelHandler);
 
     void configClientPipeline(URL url, ChannelPipeline pipeline, SslContext sslContext);
 

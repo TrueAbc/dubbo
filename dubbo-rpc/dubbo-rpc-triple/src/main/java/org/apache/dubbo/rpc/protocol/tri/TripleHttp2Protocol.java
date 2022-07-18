@@ -23,7 +23,9 @@ import org.apache.dubbo.common.config.ConfigurationUtils;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.common.extension.ExtensionLoader;
 import org.apache.dubbo.common.threadpool.manager.ExecutorRepository;
+import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.api.AbstractWireProtocol;
+import org.apache.dubbo.remoting.api.pu.NioChannel;
 import org.apache.dubbo.rpc.HeaderFilter;
 import org.apache.dubbo.rpc.model.ApplicationModel;
 import org.apache.dubbo.rpc.model.FrameworkModel;
@@ -99,41 +101,44 @@ public class TripleHttp2Protocol extends AbstractWireProtocol implements ScopeMo
     }
 
     @Override
-    public void configServerPipeline(URL url, ChannelPipeline pipeline, SslContext sslContext) {
-        final List<HeaderFilter> headFilters;
-        if (filtersLoader != null) {
-            headFilters = filtersLoader.getActivateExtension(url,
-                HEADER_FILTER_KEY);
-        } else {
-            headFilters = Collections.emptyList();
+    public void configServerPipeline(URL url, org.apache.dubbo.remoting.Channel channel, ChannelHandler channelHandler) {
+        if(channel instanceof NioChannel) {
+            System.out.println("this is an nio channel");
+            final List<HeaderFilter> headFilters;
+            if (filtersLoader != null) {
+                headFilters = filtersLoader.getActivateExtension(url,
+                    HEADER_FILTER_KEY);
+            } else {
+                headFilters = Collections.emptyList();
+            }
+            final Http2FrameCodec codec = Http2FrameCodecBuilder.forServer()
+                .gracefulShutdownTimeoutMillis(10000)
+                .initialSettings(new Http2Settings().headerTableSize(
+                        config.getInt(H2_SETTINGS_HEADER_TABLE_SIZE_KEY, DEFAULT_SETTING_HEADER_LIST_SIZE))
+                    .maxConcurrentStreams(
+                        config.getInt(H2_SETTINGS_MAX_CONCURRENT_STREAMS_KEY, Integer.MAX_VALUE))
+                    .initialWindowSize(
+                        config.getInt(H2_SETTINGS_INITIAL_WINDOW_SIZE_KEY, DEFAULT_WINDOW_INIT_SIZE))
+                    .maxFrameSize(config.getInt(H2_SETTINGS_MAX_FRAME_SIZE_KEY, DEFAULT_MAX_FRAME_SIZE))
+                    .maxHeaderListSize(config.getInt(H2_SETTINGS_MAX_HEADER_LIST_SIZE_KEY,
+                        DEFAULT_MAX_HEADER_LIST_SIZE)))
+                .frameLogger(SERVER_LOGGER)
+                .build();
+            final Http2MultiplexHandler handler = new Http2MultiplexHandler(
+                new ChannelInitializer<Channel>() {
+                    @Override
+                    protected void initChannel(Channel ch) {
+                        final ChannelPipeline p = ch.pipeline();
+                        p.addLast(new TripleCommandOutBoundHandler());
+                        p.addLast(new TripleHttp2FrameServerHandler(frameworkModel, lookupExecutor(url),
+                            headFilters));
+                    }
+                });
+            Channel ch = (Channel) ((NioChannel<?>) channel).getNioChannel();
+            ch.pipeline().addLast(codec, new TripleServerConnectionHandler(), handler,
+                new TripleTailHandler());
         }
-        final Http2FrameCodec codec = Http2FrameCodecBuilder.forServer()
-            .gracefulShutdownTimeoutMillis(10000)
-            .initialSettings(new Http2Settings().headerTableSize(
-                    config.getInt(H2_SETTINGS_HEADER_TABLE_SIZE_KEY, DEFAULT_SETTING_HEADER_LIST_SIZE))
-                .maxConcurrentStreams(
-                    config.getInt(H2_SETTINGS_MAX_CONCURRENT_STREAMS_KEY, Integer.MAX_VALUE))
-                .initialWindowSize(
-                    config.getInt(H2_SETTINGS_INITIAL_WINDOW_SIZE_KEY, DEFAULT_WINDOW_INIT_SIZE))
-                .maxFrameSize(config.getInt(H2_SETTINGS_MAX_FRAME_SIZE_KEY, DEFAULT_MAX_FRAME_SIZE))
-                .maxHeaderListSize(config.getInt(H2_SETTINGS_MAX_HEADER_LIST_SIZE_KEY,
-                    DEFAULT_MAX_HEADER_LIST_SIZE)))
-            .frameLogger(SERVER_LOGGER)
-            .build();
-        final Http2MultiplexHandler handler = new Http2MultiplexHandler(
-            new ChannelInitializer<Channel>() {
-                @Override
-                protected void initChannel(Channel ch) {
-                    final ChannelPipeline p = ch.pipeline();
-                    p.addLast(new TripleCommandOutBoundHandler());
-                    p.addLast(new TripleHttp2FrameServerHandler(frameworkModel, lookupExecutor(url),
-                        headFilters));
-                }
-            });
-        pipeline.addLast(codec, new TripleServerConnectionHandler(), handler,
-            new TripleTailHandler());
     }
-
 
     private Executor lookupExecutor(URL url) {
         return url.getOrDefaultApplicationModel()
