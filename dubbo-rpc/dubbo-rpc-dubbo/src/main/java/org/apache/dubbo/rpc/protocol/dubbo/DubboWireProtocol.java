@@ -19,15 +19,6 @@ public class DubboWireProtocol extends AbstractWireProtocol {
 
     @Override
     public void configServerPipeline(URL url, Channel channel, ChannelHandler channelHandler) {
-        if (channel instanceof NioChannel) {
-            io.netty.channel.Channel ch = (io.netty.channel.Channel) ((NioChannel<?>) channel).getNioChannel();
-            NettyServerHandler sh = new NettyServerHandler(url, channelHandler);
-            Codec2 codec2 = ExtensionLoader.getExtensionLoader(Codec2.class).getExtension(url.getProtocol());
 
-            NettyCodecAdapter codec = new NettyCodecAdapter(codec2, url, channelHandler);
-            ch.pipeline().addLast("decoder", codec.getDecoder())
-                .addLast("encoder", codec.getEncoder())
-                .addLast("handler", sh);
-        }
     }
 }

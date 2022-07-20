@@ -93,7 +93,9 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
                     case UNRECOGNIZED:
                         continue;
                     case RECOGNIZED:
-                        protocol.configServerPipeline(url, channel, handler);
+                        //todo dubbo protocol 的关键点是url, handler, 所以这步操作可以考虑
+                        //todo 将triple的非共有部分更改到
+                        NettyConfigOperator.configServerPipeline(url, channel, handler);
                         ctx.pipeline().remove(this);
                     case NEED_MORE_DATA:
                         return;
