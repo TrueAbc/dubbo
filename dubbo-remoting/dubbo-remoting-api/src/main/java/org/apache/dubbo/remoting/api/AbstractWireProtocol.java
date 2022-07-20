@@ -42,5 +42,4 @@ public abstract class AbstractWireProtocol implements WireProtocol {
     @Override
     public void close() {
     }
-
 }
