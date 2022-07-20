@@ -23,6 +23,7 @@ import org.apache.dubbo.common.logger.LoggerFactory;
 import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.api.ProtocolDetector;
 import org.apache.dubbo.remoting.api.WireProtocol;
+import org.apache.dubbo.remoting.api.pu.ChannelOperator;
 import org.apache.dubbo.remoting.buffer.ChannelBuffer;
 
 import io.netty.buffer.ByteBuf;
@@ -95,7 +96,8 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
                     case RECOGNIZED:
                         //todo dubbo protocol 的关键点是url, handler, 所以这步操作可以考虑
                         //todo 将triple的非共有部分更改到
-                        NettyConfigOperator.configServerPipeline(url, channel, handler);
+                        ChannelOperator operator = new NettyConfigOperator(channel);
+                        protocol.configServerPipeline(url, operator);
                         ctx.pipeline().remove(this);
                     case NEED_MORE_DATA:
                         return;
