@@ -19,9 +19,7 @@ public class DubboWireProtocol extends AbstractWireProtocol {
 
     @Override
     public void configServerPipeline(URL url, ChannelOperator channelOperator) {
-        Codec2 codec = url.getOrDefaultFrameworkModel().getExtensionLoader(Codec2.class).getExtension(url.getProtocol());
         List<ChannelHandler> handlerList = new ArrayList<>();
-        handlerList.add(new ChannelHandlerPretender(codec));
         channelOperator.configChannelHandler(handlerList);
     }
 }
