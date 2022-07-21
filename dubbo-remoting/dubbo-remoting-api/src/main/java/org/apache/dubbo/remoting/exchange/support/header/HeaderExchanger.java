@@ -42,8 +42,14 @@ public class HeaderExchanger implements Exchanger {
 
     @Override
     public ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingException {
-        return new HeaderExchangeServer(url.getOrDefaultFrameworkModel().getExtensionLoader(PortUnificationTransporter.class)
-            .getAdaptiveExtension().bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
+        ExchangeServer server;
+        try {
+            server = new HeaderExchangeServer(url.getOrDefaultFrameworkModel().getExtensionLoader(PortUnificationTransporter.class)
+                .getAdaptiveExtension().bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
+        }catch (Exception e) {
+            server = new HeaderExchangeServer(Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
+        }
+        return server;
 //        return new HeaderExchangeServer(PortUnificationTransporter.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
     }
 

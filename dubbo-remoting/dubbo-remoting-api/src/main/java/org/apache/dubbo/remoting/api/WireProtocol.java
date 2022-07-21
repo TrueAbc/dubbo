@@ -19,7 +19,6 @@ package org.apache.dubbo.remoting.api;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.extension.ExtensionScope;
 import org.apache.dubbo.common.extension.SPI;
-import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.api.pu.ChannelOperator;
 
 import io.netty.channel.ChannelPipeline;
