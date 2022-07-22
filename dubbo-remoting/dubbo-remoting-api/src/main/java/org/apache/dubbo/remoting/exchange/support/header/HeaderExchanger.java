@@ -17,6 +17,7 @@
 package org.apache.dubbo.remoting.exchange.support.header;
 
 import org.apache.dubbo.common.URL;
+import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.remoting.RemotingException;
 import org.apache.dubbo.remoting.Transporters;
 import org.apache.dubbo.remoting.api.pu.PortUnificationTransporter;
@@ -44,8 +45,13 @@ public class HeaderExchanger implements Exchanger {
     public ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingException {
         ExchangeServer server;
         try {
-            server = new HeaderExchangeServer(url.getOrDefaultFrameworkModel().getExtensionLoader(PortUnificationTransporter.class)
-                .getAdaptiveExtension().bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
+            //
+            if (url.getProtocol().equals(CommonConstants.DUBBO) ) {
+                server = new HeaderExchangeServer(url.getOrDefaultFrameworkModel().getExtensionLoader(PortUnificationTransporter.class)
+                    .getAdaptiveExtension().bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
+            }else  {
+                server = new HeaderExchangeServer(Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
+            }
         }catch (Exception e) {
             server = new HeaderExchangeServer(Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
         }
