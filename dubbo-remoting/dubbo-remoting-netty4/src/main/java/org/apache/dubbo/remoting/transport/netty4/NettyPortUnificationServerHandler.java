@@ -27,15 +27,18 @@ import org.apache.dubbo.remoting.api.pu.ChannelOperator;
 import org.apache.dubbo.remoting.buffer.ChannelBuffer;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.util.concurrent.ScheduledFuture;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
 
@@ -69,6 +72,16 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
+        NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
+        for (WireProtocol protocol: this.protocols) {
+             byte[] task = protocol.runActivateTask();
+             if (task != null) {
+                 ScheduledFuture<?> welcomeFuture = ctx.executor().schedule(() -> {
+                     ctx.writeAndFlush(Unpooled.wrappedBuffer(task));
+                 }, 500, TimeUnit.MILLISECONDS);
+                 protocol.setActivateFuture(welcomeFuture);
+             }
+        }
         channels.add(ctx.channel());
     }
 

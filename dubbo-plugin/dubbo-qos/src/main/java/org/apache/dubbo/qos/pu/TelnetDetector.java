@@ -42,7 +42,7 @@ public class TelnetDetector implements ProtocolDetector {
         back.getBytes(back.readerIndex(), backBytes);
 
         String s = new String(backBytes, CharsetUtil.UTF_8);
-        s = s.trim();
+        s = s.trim(); // trim /r/n to let parser work for the input
         CommandContext commandContext = TelnetCommandDecoder.decode(s);
         if(frameworkModel.getExtensionLoader(BaseCommand.class).hasExtension(commandContext.getCommandName())){
             return Result.RECOGNIZED;

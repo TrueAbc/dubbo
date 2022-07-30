@@ -29,12 +29,19 @@ import org.apache.dubbo.rpc.model.ScopeModelAware;
 
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.ssl.SslContext;
+import io.netty.util.concurrent.ScheduledFuture;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 @Activate
 public class QosWireProtocol extends AbstractWireProtocol implements ScopeModelAware {
+    public static final String PROMPT = "dubbo>";
+    public static final String welcome = DubboLogo.DUBBO;
+    private ScheduledFuture<?> welcomeFuture;
+
     public QosWireProtocol() {
         super(new QosDetector());
     }
@@ -42,6 +49,9 @@ public class QosWireProtocol extends AbstractWireProtocol implements ScopeModelA
     @Override
     public void configServerProtocolHandler(URL url, ChannelOperator operator) {
         // add qosProcess handler
+        if (welcomeFuture != null && welcomeFuture.isCancellable()) {
+            welcomeFuture.cancel(false);
+        }
         QosProcessHandler handler = new QosProcessHandler(url.getOrDefaultFrameworkModel(),DubboLogo.DUBBO, false);
         List<ChannelHandler> handlers = new ArrayList<>();
         handlers.add(new ChannelHandlerPretender(handler));
@@ -59,4 +69,22 @@ public class QosWireProtocol extends AbstractWireProtocol implements ScopeModelA
         QosDetector detector = (QosDetector) this.detector();
         detector.setFrameWorkModel(frameworkModel);
     }
+
+    @Override
+    public byte[] runActivateTask() throws IOException {
+        if (welcome != null) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            os.write(welcome.getBytes());
+            os.write(PROMPT.getBytes());
+            return os.toByteArray();
+        }else {
+            return null;
+        }
+    }
+
+    @Override
+    public void setActivateFuture(Object future) {
+        this.welcomeFuture = (ScheduledFuture<?>) future;
+    }
+
 }
