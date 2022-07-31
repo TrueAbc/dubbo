@@ -35,11 +35,6 @@ public class EmptyProtocol implements WireProtocol {
         return null;
     }
 
-    @Override
-    public void setActivateFuture(Object future) {
-
-    }
-
 
     @Override
     public void configServerProtocolHandler(URL url, ChannelOperator operator) {

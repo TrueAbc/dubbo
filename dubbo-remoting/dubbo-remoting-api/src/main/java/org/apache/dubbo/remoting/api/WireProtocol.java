@@ -32,7 +32,6 @@ public interface WireProtocol {
     ProtocolDetector detector();
 
     byte[] runActivateTask() throws IOException;
-    void setActivateFuture(Object future);
 
     void configServerProtocolHandler(URL url, ChannelOperator operator);
 

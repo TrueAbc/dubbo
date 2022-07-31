@@ -20,6 +20,7 @@ import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.io.Bytes;
 import org.apache.dubbo.common.logger.Logger;
 import org.apache.dubbo.common.logger.LoggerFactory;
+import org.apache.dubbo.remoting.Channel;
 import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.api.ProtocolDetector;
 import org.apache.dubbo.remoting.api.WireProtocol;
@@ -34,9 +35,13 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.util.concurrent.ScheduledFuture;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
 
@@ -50,6 +55,7 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
     private final ChannelHandler handler;
     private final boolean detectSsl;
     private final List<WireProtocol> protocols;
+    private ConcurrentMap<Channel, ScheduledFuture<?>> welcomeFutures = new ConcurrentHashMap<>();
 
     public NettyPortUnificationServerHandler(URL url, SslContext sslCtx, boolean detectSsl,
                                              List<WireProtocol> protocols, ChannelGroup channels,
@@ -70,15 +76,16 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
-        System.out.println("activate channel ");
+        NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
         for (WireProtocol protocol: this.protocols) {
              byte[] task = protocol.runActivateTask();
              if (task != null) {
-                 ctx.writeAndFlush(Unpooled.wrappedBuffer(task));
-//                 ScheduledFuture<?> welcomeFuture = ctx.executor().schedule(() -> {
-//                     ctx.writeAndFlush(Unpooled.wrappedBuffer(task));
-//                 }, 500, TimeUnit.MILLISECONDS);
-//                 protocol.setActivateFuture(welcomeFuture);
+//                 ctx.writeAndFlush(Unpooled.wrappedBuffer(task));
+                 ScheduledFuture<?> welcomeFuture = ctx.executor().schedule(() -> {
+                     ctx.writeAndFlush(Unpooled.wrappedBuffer(task));
+                 }, 500, TimeUnit.MILLISECONDS);
+                 welcomeFutures.put(channel, welcomeFuture);
+                 System.out.println("put channel and future:" + channel + welcomeFuture);
              }
         }
         channels.add(ctx.channel());
@@ -106,6 +113,12 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
                         continue;
                     case RECOGNIZED:
                         ChannelOperator operator = new NettyConfigOperator(channel, handler);
+                        ScheduledFuture<?> f = welcomeFutures.get(channel);
+                        if(f!=null && f.isCancellable()) {
+                            System.out.println("canceled future ok");
+                            f.cancel(false);
+                            welcomeFutures.remove(channel);
+                        }
                         protocol.configServerProtocolHandler(url, operator);
                         ctx.pipeline().remove(this);
                     case NEED_MORE_DATA:

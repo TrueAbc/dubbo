@@ -62,6 +62,12 @@ public class TelnetHeaderConsumer extends ByteToMessageDecoder {
             System.out.println("finished telnet header consume");
             ctx.pipeline().remove(this);
             out.add(in.copy());
+        }else {
+            // have been canceled
+            if (in1.readableBytes() > 0 && !ChannelBuffers.prefixEquals(in1, LogoBuffer, in1.readableBytes())) {
+                ctx.pipeline().remove(this);
+                out.add(in.copy());
+            }
         }
     }
 }

@@ -81,10 +81,4 @@ public class QosWireProtocol extends AbstractWireProtocol implements ScopeModelA
             return null;
         }
     }
-
-    @Override
-    public void setActivateFuture(Object future) {
-        this.welcomeFuture = (ScheduledFuture<?>) future;
-    }
-
 }
