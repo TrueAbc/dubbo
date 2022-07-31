@@ -85,6 +85,12 @@
             <groupId>org.xerial.snappy</groupId>
             <artifactId>snappy-java</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.dubbo</groupId>
+            <artifactId>dubbo-remoting-netty4</artifactId>
+            <version>3.1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -107,7 +113,7 @@
                 <version>0.6.1</version>
                 <configuration>
                     <protocArtifact>
-                        com.google.protobuf:protoc:3.11.0:exe:${os.detected.classifier}
+                        com.google.protobuf:protoc:3.17.3:exe:${os.detected.classifier}
                     </protocArtifact>
                     <protocPlugins>
                         <protocPlugin>
