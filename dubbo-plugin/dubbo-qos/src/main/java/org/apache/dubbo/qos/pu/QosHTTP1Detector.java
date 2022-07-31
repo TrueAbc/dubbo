@@ -27,7 +27,7 @@ public class QosHTTP1Detector implements ProtocolDetector {
     @Override
     public Result detect(ChannelBuffer in) {
         final int magic = in.getByte(in.readerIndex());
-        if (isHttp(magic) ){
+        if (isHttp(magic) && in.getByte(in.readerIndex()+1) != 'R'){
             return Result.RECOGNIZED;
         }
         return Result.UNRECOGNIZED;

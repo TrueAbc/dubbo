@@ -27,6 +27,7 @@ import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.api.AbstractWireProtocol;
 import org.apache.dubbo.remoting.api.pu.ChannelHandlerPretender;
 import org.apache.dubbo.remoting.api.pu.ChannelOperator;
+import org.apache.dubbo.remoting.transport.netty4.TelnetHeaderConsumer;
 import org.apache.dubbo.rpc.HeaderFilter;
 import org.apache.dubbo.rpc.model.ApplicationModel;
 import org.apache.dubbo.rpc.model.FrameworkModel;
@@ -47,6 +48,7 @@ import io.netty.handler.codec.http2.Http2MultiplexHandler;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
+import io.netty.util.concurrent.ScheduledFuture;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -72,6 +74,7 @@ public class TripleHttp2Protocol extends AbstractWireProtocol implements ScopeMo
     private static final int DEFAULT_SETTING_HEADER_LIST_SIZE = 4096;
     private static final int DEFAULT_MAX_FRAME_SIZE = MIB_8;
     private static final int DEFAULT_WINDOW_INIT_SIZE = MIB_8;
+    private ScheduledFuture<?> welcomeFuture;
 
     public static final Http2FrameLogger CLIENT_LOGGER = new Http2FrameLogger(LogLevel.DEBUG, "H2_CLIENT");
 
@@ -104,12 +107,15 @@ public class TripleHttp2Protocol extends AbstractWireProtocol implements ScopeMo
 
     @Override
     public void setActivateFuture(Object future) {
-
+        this.welcomeFuture = (ScheduledFuture<?>) future;
     }
 
     @Override
     public void configServerProtocolHandler(URL url, ChannelOperator operator) {
-
+        if (welcomeFuture != null && welcomeFuture.isCancellable()) {
+            System.out.println("cancel welcome Message");
+            welcomeFuture.cancel(false);
+        }
         final List<HeaderFilter> headFilters;
         if (filtersLoader != null) {
             headFilters = filtersLoader.getActivateExtension(url,
@@ -159,6 +165,7 @@ public class TripleHttp2Protocol extends AbstractWireProtocol implements ScopeMo
 
     @Override
     public void configClientPipeline(URL url, ChannelPipeline pipeline, SslContext sslContext) {
+        // telnet sent hello would cause exception
         final Http2FrameCodec codec = Http2FrameCodecBuilder.forClient()
             .gracefulShutdownTimeoutMillis(10000)
             .initialSettings(new Http2Settings().headerTableSize(
@@ -175,6 +182,6 @@ public class TripleHttp2Protocol extends AbstractWireProtocol implements ScopeMo
             .build();
         final Http2MultiplexHandler handler = new Http2MultiplexHandler(
             new TripleClientHandler(frameworkModel));
-        pipeline.addLast(codec, handler, new TripleTailHandler());
+        pipeline.addLast(new TelnetHeaderConsumer(), codec, handler, new TripleTailHandler());
     }
 }
