@@ -112,8 +112,9 @@ public class TripleHttp2Protocol extends AbstractWireProtocol implements ScopeMo
 
     @Override
     public void configServerProtocolHandler(URL url, ChannelOperator operator) {
+        System.out.println("abc:" + welcomeFuture !=null);
         if (welcomeFuture != null && welcomeFuture.isCancellable()) {
-            System.out.println("cancel welcome Message");
+            System.out.println("cancel welcome Message:");
             welcomeFuture.cancel(false);
         }
         final List<HeaderFilter> headFilters;

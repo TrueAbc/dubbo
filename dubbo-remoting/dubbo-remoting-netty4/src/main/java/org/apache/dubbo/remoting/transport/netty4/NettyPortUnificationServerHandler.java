@@ -34,11 +34,9 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.util.concurrent.ScheduledFuture;
 
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
 
@@ -72,14 +70,15 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
-        NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
+        System.out.println("activate channel ");
         for (WireProtocol protocol: this.protocols) {
              byte[] task = protocol.runActivateTask();
              if (task != null) {
-                 ScheduledFuture<?> welcomeFuture = ctx.executor().schedule(() -> {
-                     ctx.writeAndFlush(Unpooled.wrappedBuffer(task));
-                 }, 500, TimeUnit.MILLISECONDS);
-                 protocol.setActivateFuture(welcomeFuture);
+                 ctx.writeAndFlush(Unpooled.wrappedBuffer(task));
+//                 ScheduledFuture<?> welcomeFuture = ctx.executor().schedule(() -> {
+//                     ctx.writeAndFlush(Unpooled.wrappedBuffer(task));
+//                 }, 500, TimeUnit.MILLISECONDS);
+//                 protocol.setActivateFuture(welcomeFuture);
              }
         }
         channels.add(ctx.channel());

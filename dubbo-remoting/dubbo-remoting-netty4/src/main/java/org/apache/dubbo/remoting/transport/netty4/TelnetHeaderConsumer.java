@@ -44,6 +44,7 @@ public class TelnetHeaderConsumer extends ByteToMessageDecoder {
         if (in.readableBytes() >= LogoBuffer.readableBytes() + PromptBuffer.readableBytes()){
             if(ChannelBuffers.prefixEquals(in1, LogoBuffer, LogoBuffer.readableBytes())) {
                 int count = LogoBuffer.readableBytes();
+                System.out.println("ok for consume logo");
                 while (count > 0) {
                     count--;
                     in1.readByte();
@@ -51,6 +52,7 @@ public class TelnetHeaderConsumer extends ByteToMessageDecoder {
 
                 if(ChannelBuffers.prefixEquals(in1, PromptBuffer, PromptBuffer.readableBytes())) {
                     count = PromptBuffer.readableBytes();
+                    System.out.println("ok for consume prompt");
                     while (count > 0) {
                         count--;
                         in1.readByte();
