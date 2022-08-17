@@ -20,6 +20,8 @@ import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.io.Bytes;
 import org.apache.dubbo.common.logger.Logger;
 import org.apache.dubbo.common.logger.LoggerFactory;
+import org.apache.dubbo.common.utils.NetUtils;
+import org.apache.dubbo.remoting.Channel;
 import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.api.ProtocolDetector;
 import org.apache.dubbo.remoting.api.WireProtocol;
@@ -34,8 +36,11 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 
+import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
 
@@ -49,16 +54,22 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
     private final ChannelHandler handler;
     private final boolean detectSsl;
     private final List<WireProtocol> protocols;
+    /*
+    channels of dubbo framework(has a netty channel member)
+     */
+    private final Map<String, Channel> dubboChannels;
+
 
     public NettyPortUnificationServerHandler(URL url, SslContext sslCtx, boolean detectSsl,
                                              List<WireProtocol> protocols, ChannelGroup channels,
-                                             ChannelHandler handler) {
+                                             ChannelHandler handler, Map<String, Channel> dubboChannels) {
         this.url = url;
         this.sslCtx = sslCtx;
         this.protocols = protocols;
         this.detectSsl = detectSsl;
         this.channels = channels;
         this.handler = handler;
+        this.dubboChannels = dubboChannels;
     }
 
     @Override
@@ -69,6 +80,10 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
+        NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
+        if (channel != null) {
+            dubboChannels.put(NetUtils.toAddressString((InetSocketAddress) ctx.channel().remoteAddress()), channel);
+        }
         channels.add(ctx.channel());
     }
 
@@ -123,7 +138,8 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
         ChannelPipeline p = ctx.pipeline();
         p.addLast("ssl", sslCtx.newHandler(ctx.alloc()));
         p.addLast("unificationA",
-            new NettyPortUnificationServerHandler(url, sslCtx, false, protocols, channels, handler));
+            new NettyPortUnificationServerHandler(url, sslCtx, false, protocols,
+                channels, handler, dubboChannels));
         p.remove(this);
     }
 
