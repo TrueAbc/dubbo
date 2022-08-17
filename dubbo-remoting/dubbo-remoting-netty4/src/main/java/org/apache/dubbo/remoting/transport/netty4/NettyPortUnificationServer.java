@@ -21,6 +21,7 @@ import org.apache.dubbo.common.config.ConfigurationUtils;
 import org.apache.dubbo.common.logger.Logger;
 import org.apache.dubbo.common.logger.LoggerFactory;
 import org.apache.dubbo.common.utils.CollectionUtils;
+import org.apache.dubbo.common.utils.ExecutorUtil;
 import org.apache.dubbo.common.utils.NetUtils;
 import org.apache.dubbo.remoting.Channel;
 import org.apache.dubbo.remoting.ChannelHandler;
@@ -83,7 +84,7 @@ public class NettyPortUnificationServer extends AbstractPortUnificationServer {
     private final Map<String, Channel> dubboChannels = new ConcurrentHashMap<>();
 
     public NettyPortUnificationServer(URL url, ChannelHandler handler) throws RemotingException {
-        super(url, ChannelHandlers.wrap(handler, url));
+        super(ExecutorUtil.setThreadName(url, SERVER_THREAD_POOL_NAME), ChannelHandlers.wrap(handler, url));
 
         // you can customize name and type of client thread pool by THREAD_NAME_KEY and THREADPOOL_KEY in CommonConstants.
         // the handler will be wrapped: MultiMessageHandler->HeartbeatHandler->handler
@@ -224,4 +225,8 @@ public class NettyPortUnificationServer extends AbstractPortUnificationServer {
         return (InetSocketAddress) channel.localAddress();
     }
 
+    @Override
+    public boolean canHandleIdle() {
+        return true;
+    }
 }
