@@ -634,6 +634,18 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             doExportUrl(url, true);
         }
 
+        // 配置多个url
+        String extProtocol = url.getParameter("ext.protocol", "");
+        // 完成了ext的配置, 避免其他地方可能使用本参数? 这个参数还标志需要使用pu server
+//        url.removeParameter("ext.protocol");
+        if (!extProtocol.equals("")) {
+            System.out.println("ext protocol detect:" + extProtocol);
+            URL extURL = URLBuilder.from(url).
+                setProtocol(extProtocol).
+                build();
+            extURL = extURL.removeParameter("ext.protocol");
+            exportRemote(extURL, registryURLs);
+        }
 
         return url;
     }

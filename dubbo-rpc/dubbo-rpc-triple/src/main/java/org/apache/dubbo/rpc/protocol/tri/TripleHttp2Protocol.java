@@ -61,6 +61,7 @@ import static org.apache.dubbo.rpc.Constants.H2_SETTINGS_INITIAL_WINDOW_SIZE_KEY
 import static org.apache.dubbo.rpc.Constants.H2_SETTINGS_MAX_CONCURRENT_STREAMS_KEY;
 import static org.apache.dubbo.rpc.Constants.H2_SETTINGS_MAX_FRAME_SIZE_KEY;
 import static org.apache.dubbo.rpc.Constants.H2_SETTINGS_MAX_HEADER_LIST_SIZE_KEY;
+import static org.apache.dubbo.rpc.Constants.INTERFACE;
 
 @Activate
 public class TripleHttp2Protocol extends AbstractWireProtocol implements ScopeModelAware {
@@ -153,6 +154,7 @@ public class TripleHttp2Protocol extends AbstractWireProtocol implements ScopeMo
 
 
     private Executor lookupExecutor(URL url) {
+        url = url.removeParameter(INTERFACE);
         return url.getOrDefaultApplicationModel()
             .getExtensionLoader(ExecutorRepository.class)
             .getDefaultExtension().getExecutor(url);

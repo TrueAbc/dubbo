@@ -17,6 +17,7 @@
 package org.apache.dubbo.remoting.transport.netty4;
 
 import org.apache.dubbo.common.URL;
+import org.apache.dubbo.common.URLBuilder;
 import org.apache.dubbo.common.io.Bytes;
 import org.apache.dubbo.common.logger.Logger;
 import org.apache.dubbo.common.logger.LoggerFactory;
@@ -25,7 +26,6 @@ import org.apache.dubbo.remoting.Channel;
 import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.api.ProtocolDetector;
 import org.apache.dubbo.remoting.api.WireProtocol;
-import org.apache.dubbo.remoting.api.pu.ChannelOperator;
 import org.apache.dubbo.remoting.buffer.ChannelBuffer;
 
 import io.netty.buffer.ByteBuf;
@@ -101,10 +101,13 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
                         continue;
                     case RECOGNIZED:
                         System.out.println("recognized name :" + protocol.protocolName());
-                        ChannelOperator operator = new NettyConfigOperator(channel, handler);
-                        ((NettyConfigOperator)operator).setProtocolName(protocol.protocolName());
+                        NettyConfigOperator operator = new NettyConfigOperator(channel, handler);
+                        operator.setProtocolName(protocol.protocolName());
                         // 线程池在服务端是根据protocol共享的
-                        protocol.configServerProtocolHandler(url, operator);
+                        URL extURL = URLBuilder.from(url).
+                            setProtocol(protocol.protocolName()).build();
+
+                        protocol.configServerProtocolHandler(extURL, operator);
                         ctx.pipeline().remove(this);
                     case NEED_MORE_DATA:
                         return;
