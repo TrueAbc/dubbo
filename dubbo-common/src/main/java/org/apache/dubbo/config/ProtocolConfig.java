@@ -571,6 +571,7 @@ public class ProtocolConfig extends AbstractConfig {
     }
 
     public void setExtProtocol(String extProtocol) {
+        System.out.println("set result of ext protocol:" + extProtocol);
         this.extProtocol = extProtocol;
     }
 

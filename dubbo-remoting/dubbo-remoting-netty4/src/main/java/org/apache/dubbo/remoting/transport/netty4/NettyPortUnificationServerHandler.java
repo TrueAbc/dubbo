@@ -100,7 +100,10 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
                     case UNRECOGNIZED:
                         continue;
                     case RECOGNIZED:
+                        System.out.println("recognized name :" + protocol.protocolName());
                         ChannelOperator operator = new NettyConfigOperator(channel, handler);
+                        ((NettyConfigOperator)operator).setProtocolName(protocol.protocolName());
+                        // 线程池在服务端是根据protocol共享的
                         protocol.configServerProtocolHandler(url, operator);
                         ctx.pipeline().remove(this);
                     case NEED_MORE_DATA:

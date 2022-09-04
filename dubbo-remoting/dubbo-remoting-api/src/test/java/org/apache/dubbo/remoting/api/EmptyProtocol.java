@@ -29,6 +29,11 @@ public class EmptyProtocol implements WireProtocol {
     }
 
     @Override
+    public String protocolName() {
+        return "empty";
+    }
+
+    @Override
     public void configServerProtocolHandler(URL url, ChannelOperator operator) {
 
     }

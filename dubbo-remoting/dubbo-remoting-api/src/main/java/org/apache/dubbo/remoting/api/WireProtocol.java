@@ -29,6 +29,8 @@ public interface WireProtocol {
 
     ProtocolDetector detector();
 
+    String protocolName();
+
     void configServerProtocolHandler(URL url, ChannelOperator operator);
 
     void configClientPipeline(URL url, ChannelPipeline pipeline, SslContext sslContext);

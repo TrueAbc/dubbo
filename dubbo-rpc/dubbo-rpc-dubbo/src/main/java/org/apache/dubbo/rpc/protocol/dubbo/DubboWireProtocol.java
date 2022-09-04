@@ -17,6 +17,7 @@
 package org.apache.dubbo.rpc.protocol.dubbo;
 
 import org.apache.dubbo.common.URL;
+import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.api.AbstractWireProtocol;
@@ -31,6 +32,11 @@ public class DubboWireProtocol extends AbstractWireProtocol {
         super(new DubboDetector());
     }
 
+
+    @Override
+    public String protocolName() {
+        return CommonConstants.DUBBO;
+    }
 
     @Override
     public void configServerProtocolHandler(URL url, ChannelOperator operator) {

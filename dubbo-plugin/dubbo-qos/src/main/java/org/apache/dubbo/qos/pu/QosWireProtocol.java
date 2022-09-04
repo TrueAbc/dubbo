@@ -17,6 +17,7 @@
 package org.apache.dubbo.qos.pu;
 
 import org.apache.dubbo.common.URL;
+import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.qos.server.DubboLogo;
 import org.apache.dubbo.qos.server.handler.QosProcessHandler;
@@ -42,6 +43,11 @@ public class QosWireProtocol extends AbstractWireProtocol implements ScopeModelA
 
     public void setQosEnable(boolean flag) {
         ((QosDetector)this.detector()).setQosEnableFlag(flag);
+    }
+
+    @Override
+    public String protocolName() {
+        return "qos";
     }
 
     @Override
