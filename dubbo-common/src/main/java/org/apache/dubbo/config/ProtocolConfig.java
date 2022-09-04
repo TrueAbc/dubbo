@@ -200,6 +200,12 @@ public class ProtocolConfig extends AbstractConfig {
 
     private Boolean sslEnabled;
 
+    /**
+     * Port Unification Server
+     */
+    //todo may need to be a string list
+    private String extProtocol;
+
     public ProtocolConfig() {
     }
 
@@ -558,6 +564,14 @@ public class ProtocolConfig extends AbstractConfig {
 
     public void setExtension(String extension) {
         this.extension = extension;
+    }
+
+    public String getExtProtocol() {
+        return extProtocol;
+    }
+
+    public void setExtProtocol(String extProtocol) {
+        this.extProtocol = extProtocol;
     }
 
     @Override

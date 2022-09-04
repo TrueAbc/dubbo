@@ -1260,6 +1260,11 @@
                 <xsd:documentation><![CDATA[ The protocol name. ]]></xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>
+        <xsd:attribute name="ext-protocol" type="xsd:string" use="optional">
+            <xsd:annotation>
+                <xsd:documentation><![CDATA[extra protocol name. ]]></xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
         <xsd:attribute name="host" type="xsd:string">
             <xsd:annotation>
                 <xsd:documentation><![CDATA[ The service host. ]]></xsd:documentation>

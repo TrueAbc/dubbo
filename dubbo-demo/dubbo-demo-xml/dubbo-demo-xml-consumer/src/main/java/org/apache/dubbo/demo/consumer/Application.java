@@ -33,10 +33,10 @@ public class Application {
     public static void main(String[] args) throws Exception {
         ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring/dubbo-consumer.xml");
         context.start();
-        DemoService demoService = context.getBean("demoService", DemoService.class);
+//        DemoService demoService = context.getBean("demoService", DemoService.class);
         GreetingService greetingService = context.getBean("greetingService", GreetingService.class);
-        RestDemoService restDemoService = context.getBean("restDemoService", RestDemoService.class);
-        TripleService tripleService = context.getBean("tripleService", TripleService.class);
+//        RestDemoService restDemoService = context.getBean("restDemoService", RestDemoService.class);
+//        TripleService tripleService = context.getBean("tripleService", TripleService.class);
 
         new Thread(() -> {
             while (true) {
@@ -53,48 +53,48 @@ public class Application {
             }
         }).start();
 
-        new Thread(() -> {
-            while (true) {
-                try {
-                    String restResult = restDemoService.sayHello("rest");
-                    System.out.println(restResult + " from separated thread.");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                }
-            }
-        }).start();
+//        new Thread(() -> {
+//            while (true) {
+//                try {
+//                    String restResult = restDemoService.sayHello("rest");
+//                    System.out.println(restResult + " from separated thread.");
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//                try {
+//                    Thread.sleep(1000);
+//                } catch (InterruptedException e) {
+//                }
+//            }
+//        }).start();
+//
+//        new Thread(() -> {
+//            while (true) {
+//                try {
+//                    String restResult = tripleService.hello();
+//                    System.out.println(restResult + " from separated thread.");
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//                try {
+//                    Thread.sleep(1000);
+//                } catch (InterruptedException e) {
+//                }
+//            }
+//        }).start();
 
-        new Thread(() -> {
-            while (true) {
-                try {
-                    String restResult = tripleService.hello();
-                    System.out.println(restResult + " from separated thread.");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                }
-            }
-        }).start();
-
-        while (true) {
-            try {
-                CompletableFuture<String> hello = demoService.sayHelloAsync("world");
-                System.out.println("result: " + hello.get());
-
-                String greetings = greetingService.hello();
-                System.out.println("result: " + greetings);
-            } catch (Exception e) {
-//                e.printStackTrace();
-            }
-
-            Thread.sleep(5000);
-        }
+//        while (true) {
+//            try {
+//                CompletableFuture<String> hello = demoService.sayHelloAsync("world");
+//                System.out.println("result: " + hello.get());
+//
+//                String greetings = greetingService.hello();
+//                System.out.println("result: " + greetings);
+//            } catch (Exception e) {
+////                e.printStackTrace();
+//            }
+//
+//            Thread.sleep(5000);
+//        }
     }
 }
