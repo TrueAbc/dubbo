@@ -1260,7 +1260,7 @@
                 <xsd:documentation><![CDATA[ The protocol name. ]]></xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>
-        <xsd:attribute name="ext-protocol" type="xsd:string" use="optional">
+        <xsd:attribute name="ext-protocol" type="xsd:string">
             <xsd:annotation>
                 <xsd:documentation><![CDATA[extra protocol name. ]]></xsd:documentation>
             </xsd:annotation>
