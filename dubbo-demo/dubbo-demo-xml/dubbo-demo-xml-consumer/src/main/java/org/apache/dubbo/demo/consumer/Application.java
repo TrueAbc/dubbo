@@ -16,14 +16,14 @@
  */
 package org.apache.dubbo.demo.consumer;
 
-import org.apache.dubbo.demo.DemoService;
+//import org.apache.dubbo.demo.DemoService;
 import org.apache.dubbo.demo.GreetingService;
-import org.apache.dubbo.demo.RestDemoService;
-import org.apache.dubbo.demo.TripleService;
+//import org.apache.dubbo.demo.RestDemoService;
+//import org.apache.dubbo.demo.TripleService;
 
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import java.util.concurrent.CompletableFuture;
+//import java.util.concurrent.CompletableFuture;
 
 public class Application {
     /**
