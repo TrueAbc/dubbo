@@ -34,17 +34,20 @@ public class PortUnificationExchanger {
     private static final Logger log = LoggerFactory.getLogger(PortUnificationExchanger.class);
     private static final ConcurrentMap<String, RemotingServer> servers = new ConcurrentHashMap<>();
 
-    public static void bind(URL url, ChannelHandler handler) {
+    public static RemotingServer bind(URL url, ChannelHandler handler) {
+        System.out.println("this url is " + url + ":port" + url.getAddress());
         servers.computeIfAbsent(url.getAddress(), addr -> {
             final AbstractPortUnificationServer server;
             try {
                 server = getTransporter(url).bind(url, handler);
             } catch (RemotingException e) {
+                System.out.println(e);
                 throw new RuntimeException(e);
             }
             // server.bind();
             return server;
         });
+        return servers.get(url.getAddress());
     }
 
     public static void close() {

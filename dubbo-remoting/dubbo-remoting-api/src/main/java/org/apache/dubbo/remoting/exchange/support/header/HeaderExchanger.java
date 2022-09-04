@@ -18,12 +18,13 @@ package org.apache.dubbo.remoting.exchange.support.header;
 
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.remoting.RemotingException;
+import org.apache.dubbo.remoting.RemotingServer;
 import org.apache.dubbo.remoting.Transporters;
-import org.apache.dubbo.remoting.api.pu.PortUnificationTransporter;
 import org.apache.dubbo.remoting.exchange.ExchangeClient;
 import org.apache.dubbo.remoting.exchange.ExchangeHandler;
 import org.apache.dubbo.remoting.exchange.ExchangeServer;
 import org.apache.dubbo.remoting.exchange.Exchanger;
+import org.apache.dubbo.remoting.exchange.PortUnificationExchanger;
 import org.apache.dubbo.remoting.transport.DecodeHandler;
 
 import static org.apache.dubbo.remoting.Constants.IS_PU_SERVER_KEY;
@@ -47,8 +48,9 @@ public class HeaderExchanger implements Exchanger {
         ExchangeServer server;
         boolean isPuServerKey = url.getParameter(IS_PU_SERVER_KEY, false);
         if(isPuServerKey) {
-            server =  new HeaderExchangeServer(url.getOrDefaultFrameworkModel().getExtensionLoader(PortUnificationTransporter.class)
-                .getAdaptiveExtension().bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
+            // 这里需要调用PortUnificationExchanger, Transporter并不管理server
+            RemotingServer puServer = PortUnificationExchanger.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler)));
+            server =  new HeaderExchangeServer(puServer);
         }else {
             server = new HeaderExchangeServer(Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
         }

@@ -103,6 +103,9 @@ public class NettyPortUnificationServer extends AbstractPortUnificationServer {
 
     @Override
     public void doOpen() {
+        if (channel != null) {
+            return;
+        }
         bootstrap = new ServerBootstrap();
 
         bossGroup = NettyEventLoopFactory.eventLoopGroup(1, EVENT_LOOP_BOSS_POOL_NAME);
