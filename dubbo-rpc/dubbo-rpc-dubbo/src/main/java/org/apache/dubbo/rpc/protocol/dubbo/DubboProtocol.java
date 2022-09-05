@@ -366,7 +366,7 @@ public class DubboProtocol extends AbstractProtocol {
             // enable heartbeat by default
             .addParameterIfAbsent(HEARTBEAT_KEY, String.valueOf(DEFAULT_HEARTBEAT))
             .addParameter(CODEC_KEY, DubboCodec.NAME)
-//            .addParameter(IS_PU_SERVER_KEY, Boolean.TRUE.toString())
+            .addParameter(IS_PU_SERVER_KEY, Boolean.TRUE.toString())
             .build();
 
         String transporter = url.getParameter(SERVER_KEY, DEFAULT_REMOTING_SERVER);
