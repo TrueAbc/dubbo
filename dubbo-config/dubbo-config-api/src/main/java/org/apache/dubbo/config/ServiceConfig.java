@@ -84,6 +84,7 @@ import static org.apache.dubbo.config.Constants.SCOPE_NONE;
 import static org.apache.dubbo.registry.Constants.REGISTER_KEY;
 import static org.apache.dubbo.remoting.Constants.BIND_IP_KEY;
 import static org.apache.dubbo.remoting.Constants.BIND_PORT_KEY;
+import static org.apache.dubbo.remoting.Constants.IS_PU_SERVER_KEY;
 import static org.apache.dubbo.rpc.Constants.GENERIC_KEY;
 import static org.apache.dubbo.rpc.Constants.LOCAL_PROTOCOL;
 import static org.apache.dubbo.rpc.Constants.PROXY_KEY;
@@ -591,6 +592,19 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     }
 
     private URL exportRemote(URL url, List<URL> registryURLs) {
+        String extProtocol = url.getParameter("ext.protocol", "");
+
+        if (!extProtocol.equals("")) {
+            url = url.addParameter(IS_PU_SERVER_KEY, Boolean.TRUE.toString());
+            url = url.removeParameter("ext.protocol");
+            URL extURL = URLBuilder.from(url).
+                setProtocol(extProtocol).
+                build();
+            // avoid recursive function call
+            extURL = extURL.removeParameter("ext.protocol");
+            exportRemote(extURL, registryURLs);
+        }
+
         if (CollectionUtils.isNotEmpty(registryURLs)) {
             for (URL registryURL : registryURLs) {
                 if (SERVICE_REGISTRY_PROTOCOL.equals(registryURL.getProtocol())) {
