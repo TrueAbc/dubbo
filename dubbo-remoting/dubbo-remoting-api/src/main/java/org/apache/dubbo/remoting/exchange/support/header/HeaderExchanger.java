@@ -47,6 +47,7 @@ public class HeaderExchanger implements Exchanger {
         ExchangeServer server;
         boolean isPuServerKey = url.getParameter(IS_PU_SERVER_KEY, false);
         if(isPuServerKey) {
+            // dubbo暂时设置为true，用于测试
             server = new HeaderExchangeServer(PortUnificationExchanger.bind(url,
                 new DecodeHandler(new HeaderExchangeHandler(handler))));
         }else {
