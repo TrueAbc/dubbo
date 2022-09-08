@@ -14,55 +14,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.dubbo.qos.pu;
+package org.apache.dubbo.rpc.protocol.dubbo;
 
 import org.apache.dubbo.common.URL;
+import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
-import org.apache.dubbo.qos.server.DubboLogo;
-import org.apache.dubbo.qos.server.handler.QosProcessHandler;
 import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.api.AbstractWireProtocol;
-import org.apache.dubbo.remoting.api.pu.ChannelHandlerPretender;
 import org.apache.dubbo.remoting.api.pu.ChannelOperator;
-import org.apache.dubbo.rpc.model.FrameworkModel;
-import org.apache.dubbo.rpc.model.ScopeModelAware;
-
-import io.netty.channel.ChannelPipeline;
-import io.netty.handler.ssl.SslContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Activate
-public class QosWireProtocol extends AbstractWireProtocol implements ScopeModelAware {
-
-    public QosWireProtocol(FrameworkModel frameworkModel) {
-        super(new QosDetector(frameworkModel));
+public class DubboWireProtocol extends AbstractWireProtocol {
+    public DubboWireProtocol() {
+        super(new DubboDetector());
     }
 
-    public void setQosEnable(boolean flag) {
-        ((QosDetector)this.detector()).setQosEnableFlag(flag);
-    }
 
     @Override
     public void configServerProtocolHandler(URL url, ChannelOperator operator) {
-        // add qosProcess handler
-        QosProcessHandler handler = new QosProcessHandler(url.getOrDefaultFrameworkModel(),
-            DubboLogo.DUBBO, false);
         List<ChannelHandler> handlers = new ArrayList<>();
-        handlers.add(new ChannelHandlerPretender(handler));
+        // operator(for now nettyOperator)'s duties
+        // 1. config codec2 for the protocol(load by extension loader)
+        // 2. config handlers passed by wire protocol
+        // ( for triple, some h2 netty handler and logic handler to handle connection;
+        //   for dubbo, nothing, an empty handlers is used to trigger operator logic)
+        // 3. config Dubbo Inner handler(for dubbo protocol, this handler handles connection)
         operator.configChannelHandler(handlers);
-    }
-
-
-    @Override
-    public void configClientPipeline(URL url, ChannelPipeline pipeline, SslContext sslContext) {
-
     }
 
     @Override
     public String protocolName() {
-        return "qos";
+        return CommonConstants.DUBBO;
     }
-
 }
