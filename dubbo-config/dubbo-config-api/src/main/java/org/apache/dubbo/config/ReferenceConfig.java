@@ -61,7 +61,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 import static org.apache.dubbo.common.constants.CommonConstants.ANY_VALUE;
 import static org.apache.dubbo.common.constants.CommonConstants.CLUSTER_KEY;
@@ -81,6 +80,7 @@ import static org.apache.dubbo.common.constants.CommonConstants.SEMICOLON_SPLIT_
 import static org.apache.dubbo.common.constants.CommonConstants.SIDE_KEY;
 import static org.apache.dubbo.common.constants.CommonConstants.SVC;
 import static org.apache.dubbo.common.constants.CommonConstants.TRIPLE;
+import static org.apache.dubbo.common.constants.CommonConstants.UNLOAD_CLUSTER_RELATED;
 import static org.apache.dubbo.common.constants.RegistryConstants.PROVIDED_BY;
 import static org.apache.dubbo.common.constants.RegistryConstants.SUBSCRIBED_SERVICE_NAMES_KEY;
 import static org.apache.dubbo.common.utils.NetUtils.isInvalidLocalHost;
@@ -244,7 +244,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                 invoker.destroy();
             }
         } catch (Throwable t) {
-            logger.warn("Unexpected error occurred when destroy invoker of ReferenceConfig(" + url + ").", t);
+            logger.warn("5-3", "", "", "Unexpected error occurred when destroy invoker of ReferenceConfig(" + url + ").", t);
         }
         invoker = null;
         ref = null;
@@ -268,7 +268,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
             serviceMetadata.setServiceType(getServiceInterfaceClass());
             // TODO, uncomment this line once service key is unified
-            serviceMetadata.setServiceKey(URL.buildKey(interfaceName, group, version));
+            serviceMetadata.generateServiceKey();
 
             Map<String, String> referenceParameters = appendConfig();
             // init service-application mapping
@@ -297,7 +297,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             serviceMetadata.setTarget(ref);
             serviceMetadata.addAttribute(PROXY_CLASS_REF, ref);
 
-            consumerModel.setDestroyCaller(getDestroyRunner());
+            consumerModel.setDestroyRunner(getDestroyRunner());
             consumerModel.setProxyObject(ref);
             consumerModel.initMethodModels();
 
@@ -308,7 +308,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                     invoker.destroy();
                 }
             } catch (Throwable destroy) {
-                logger.warn("Unexpected error occurred when destroy invoker of ReferenceConfig(" + url + ").", destroy);
+                logger.warn("5-3", "", "", "Unexpected error occurred when destroy invoker of ReferenceConfig(" + url + ").", t);
             }
             if (consumerModel != null) {
                 ModuleServiceRepository repository = getScopeModel().getServiceRepository();
@@ -381,7 +381,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
             String[] methods = methods(interfaceClass);
             if (methods.length == 0) {
-                logger.warn("No method found in service interface " + interfaceClass.getName());
+                logger.warn("5-4", "", "", "No method found in service interface: " + interfaceClass.getName());
                 map.put(METHODS_KEY, ANY_VALUE);
             } else {
                 map.put(METHODS_KEY, StringUtils.join(new HashSet<>(Arrays.asList(methods)), COMMA_SEPARATOR));
@@ -477,8 +477,8 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         String podNamespace;
         if (StringUtils.isEmpty(System.getenv("POD_NAMESPACE"))) {
             if (logger.isWarnEnabled()) {
-                logger.warn("Can not get env variable: POD_NAMESPACE, it may not be running in the K8S environment , " +
-                        "finally use 'default' replace");
+                logger.warn("5-5", "", "", "Can not get env variable: POD_NAMESPACE, it may not be running in the K8S environment , " +
+                    "finally use 'default' replace.");
             }
             podNamespace = "default";
         } else {
@@ -505,6 +505,8 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
      */
     private boolean checkMeshConfig(Map<String, String> referenceParameters) {
         if (!"true".equals(referenceParameters.getOrDefault(MESH_ENABLE, "false"))) {
+            // In mesh mode, unloadClusterRelated can only be false.
+            referenceParameters.put(UNLOAD_CLUSTER_RELATED, "false");
             return false;
         }
 
@@ -598,7 +600,9 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         if (urls.size() == 1) {
             URL curUrl = urls.get(0);
             invoker = protocolSPI.refer(interfaceClass, curUrl);
-            if (!UrlUtils.isRegistry(curUrl)) {
+            // registry url, mesh-enable and unloadClusterRelated is true, not need Cluster.
+            if (!UrlUtils.isRegistry(curUrl) &&
+                    !curUrl.getParameter(UNLOAD_CLUSTER_RELATED, false)) {
                 List<Invoker<?>> invokers = new ArrayList<>();
                 invokers.add(invoker);
                 invoker = Cluster.getCluster(scopeModel, Cluster.DEFAULT).join(new StaticDirectory(curUrl, invokers), true);
@@ -679,10 +683,10 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         }
         if (ProtocolUtils.isGeneric(generic)) {
             if (interfaceClass != null && !interfaceClass.equals(GenericService.class)) {
-                logger.warn(String.format("Found conflicting attributes for interface type: [interfaceClass=%s] and [generic=%s], " +
-                                "because the 'generic' attribute has higher priority than 'interfaceClass', so change 'interfaceClass' to '%s'. " +
-                                "Note: it will make this reference bean as a candidate bean of type '%s' instead of '%s' when resolving dependency in Spring.",
-                        interfaceClass.getName(), generic, GenericService.class.getName(), GenericService.class.getName(), interfaceClass.getName()));
+                logger.warn("5-6", "", "", String.format("Found conflicting attributes for interface type: [interfaceClass=%s] and [generic=%s], " +
+                        "because the 'generic' attribute has higher priority than 'interfaceClass', so change 'interfaceClass' to '%s'. " +
+                        "Note: it will make this reference bean as a candidate bean of type '%s' instead of '%s' when resolving dependency in Spring.",
+                    interfaceClass.getName(), generic, GenericService.class.getName(), GenericService.class.getName(), interfaceClass.getName()));
             }
             interfaceClass = GenericService.class;
         } else {
@@ -730,7 +734,6 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
      * call, which is the default behavior
      */
     protected boolean shouldJvmRefer(Map<String, String> map) {
-        URL tmpUrl = new ServiceConfigURL("temp", "localhost", 0, map);
         boolean isJvmRefer;
         if (isInjvm() == null) {
             // if an url is specified, don't do local reference
@@ -738,6 +741,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                 isJvmRefer = false;
             } else {
                 // by default, reference local service if there is
+                URL tmpUrl = new ServiceConfigURL("temp", "localhost", 0, map);
                 isJvmRefer = InjvmProtocol.getInjvmProtocol(getScopeModel()).isInjvmRefer(tmpUrl);
             }
         } else {
@@ -762,10 +766,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         return invoker;
     }
 
-    public Callable<Void> getDestroyRunner() {
-        return () -> {
-            this.destroy();
-            return null;
-        };
+    public Runnable getDestroyRunner() {
+        return this::destroy;
     }
 }

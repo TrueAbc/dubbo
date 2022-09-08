@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import static org.apache.dubbo.common.constants.CommonConstants.DUBBO;
+import static org.apache.dubbo.common.constants.CommonConstants.UNLOAD_CLUSTER_RELATED;
 
 /**
  * ReferenceConfig
@@ -65,6 +66,12 @@ public abstract class ReferenceConfigBase<T> extends AbstractReferenceConfig {
      * The consumer config (default)
      */
     protected ConsumerConfig consumer;
+
+    /**
+     * In the mesh mode, uninstall the directory, router and load balance related to the cluster in the currently invoked invoker.
+     * Delegate retry, load balancing, timeout and other traffic management capabilities to Sidecar.
+     */
+    protected Boolean unloadClusterRelated;
 
     public ReferenceConfigBase() {
         serviceMetadata = new ServiceMetadata();
@@ -165,7 +172,7 @@ public abstract class ReferenceConfigBase<T> extends AbstractReferenceConfig {
         Class<?> actualInterface = interfaceClass;
         if (interfaceClass == GenericService.class) {
             try {
-                if(getInterfaceClassLoader() != null) {
+                if (getInterfaceClassLoader() != null) {
                     actualInterface = Class.forName(interfaceName, false, getInterfaceClassLoader());
                 } else {
                     actualInterface = Class.forName(interfaceName);
@@ -191,7 +198,7 @@ public abstract class ReferenceConfigBase<T> extends AbstractReferenceConfig {
         if (StringUtils.isBlank(generic) && getConsumer() != null) {
             generic = getConsumer().getGeneric();
         }
-        if(getInterfaceClassLoader() != null) {
+        if (getInterfaceClassLoader() != null) {
             interfaceClass = determineInterfaceClass(generic, interfaceName, getInterfaceClassLoader());
         } else {
             interfaceClass = determineInterfaceClass(generic, interfaceName);
@@ -257,6 +264,15 @@ public abstract class ReferenceConfigBase<T> extends AbstractReferenceConfig {
         this.consumer = consumer;
     }
 
+    @Parameter(key = UNLOAD_CLUSTER_RELATED)
+    public Boolean getUnloadClusterRelated() {
+        return unloadClusterRelated;
+    }
+
+    public void setUnloadClusterRelated(Boolean unloadClusterRelated) {
+        this.unloadClusterRelated = unloadClusterRelated;
+    }
+
     public ServiceMetadata getServiceMetadata() {
         return serviceMetadata;
     }
@@ -274,7 +290,7 @@ public abstract class ReferenceConfigBase<T> extends AbstractReferenceConfig {
             }
             if (resolveFile != null && resolveFile.length() > 0) {
                 Properties properties = new RegexProperties();
-                try (FileInputStream fis = new FileInputStream(new File(resolveFile))) {
+                try (FileInputStream fis = new FileInputStream(resolveFile)) {
                     properties.load(fis);
                 } catch (IOException e) {
                     throw new IllegalStateException("Failed to load " + resolveFile + ", cause: " + e.getMessage(), e);
@@ -283,7 +299,7 @@ public abstract class ReferenceConfigBase<T> extends AbstractReferenceConfig {
                 resolve = properties.getProperty(interfaceName);
             }
         }
-        if (resolve != null && resolve.length() > 0) {
+        if (StringUtils.isNotEmpty(resolve)) {
             url = resolve;
             if (logger.isWarnEnabled()) {
                 if (resolveFile != null) {
