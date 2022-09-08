@@ -25,6 +25,7 @@ import org.apache.dubbo.remoting.Channel;
 import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.api.ProtocolDetector;
 import org.apache.dubbo.remoting.api.WireProtocol;
+import org.apache.dubbo.remoting.api.pu.ChannelOperator;
 import org.apache.dubbo.remoting.buffer.ChannelBuffer;
 
 import io.netty.buffer.ByteBuf;
@@ -50,21 +51,16 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
     private final boolean detectSsl;
     private final List<WireProtocol> protocols;
     private final Map<String, Channel> dubboChannels;
-    private final Map<String, URL> urlMapper;
-    private final Map<String, ChannelHandler> handlerMapper;
-
 
     public NettyPortUnificationServerHandler(URL url, SslContext sslCtx, boolean detectSsl,
                                              List<WireProtocol> protocols, ChannelHandler handler,
-                                             Map<String, Channel> dubboChannels, Map<String, URL> urlMapper, Map<String, ChannelHandler> handlerMapper) {
+                                             Map<String, Channel> dubboChannels) {
         this.url = url;
         this.sslCtx = sslCtx;
         this.protocols = protocols;
         this.detectSsl = detectSsl;
         this.handler = handler;
         this.dubboChannels = dubboChannels;
-        this.urlMapper = urlMapper;
-        this.handlerMapper = handlerMapper;
     }
 
     @Override
@@ -104,10 +100,7 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
                     case UNRECOGNIZED:
                         continue;
                     case RECOGNIZED:
-                        ChannelHandler localHandler = this.handlerMapper.get(protocol.protocolName());
-                        URL localURL = this.urlMapper.get(protocol.protocolName());
-                        channel.setUrl(localURL);
-                        NettyConfigOperator operator = new NettyConfigOperator(channel, localHandler);
+                        ChannelOperator operator = new NettyConfigOperator(channel, handler);
                         protocol.configServerProtocolHandler(url, operator);
                         ctx.pipeline().remove(this);
                     case NEED_MORE_DATA:
@@ -137,7 +130,7 @@ public class NettyPortUnificationServerHandler extends ByteToMessageDecoder {
         p.addLast("ssl", sslCtx.newHandler(ctx.alloc()));
         p.addLast("unificationA",
             new NettyPortUnificationServerHandler(url, sslCtx, false, protocols,
-                handler, dubboChannels, urlMapper, handlerMapper));
+                handler, dubboChannels));
         p.remove(this);
     }
 
