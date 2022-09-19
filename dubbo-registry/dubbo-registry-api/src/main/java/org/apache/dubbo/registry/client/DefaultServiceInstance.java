@@ -294,7 +294,9 @@ public class DefaultServiceInstance implements ServiceInstance {
         if (instanceAddressURL == null) {
             instanceAddressURL = new InstanceAddressURL(this, serviceMetadata, protocol);
         }
-        return instanceAddressURL;
+        System.out.println("this is a new protocol:" + protocol);
+        return new InstanceAddressURL(this, serviceMetadata, protocol);
+//        return instanceAddressURL;
     }
 
     @Override
